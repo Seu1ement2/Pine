@@ -1,0 +1,71 @@
+//@version=4
+study("Supertrend Grid 1.2", overlay=false)
+
+Factor = input(3, minval=1, maxval=100)
+PD = input(7, minval=1, maxval=100)
+
+Up = hl2 - Factor * atr(PD)
+Dn = hl2 + Factor * atr(PD)
+
+Trend = 0.0
+TrendUp = 0.0
+TrendDown = 0.0
+
+TrendUp := close[1] > TrendUp[1] ? max(Up, TrendUp[1]) : Up
+TrendDown := close[1] < TrendDown[1] ? min(Dn, TrendDown[1]) : Dn
+Trend := close > TrendDown[1] ? 1 : close < TrendUp[1] ? -1 : nz(Trend[1], 1)
+Tsl = Trend == 1 ? TrendUp : TrendDown
+
+tf1 = input(title="Timeframe #1 (Top)", defval="1D", options=["M", "W", "3D", "1D", "720", "360", "240", "120", "060", "030", "015", "010", "005", "003", "001"])
+tf2 = input(title="Timeframe #2", defval="240", options=["M", "W", "3D", "1D", "720", "360", "240", "120", "060", "030", "015", "010", "005", "003", "001"])
+tf3 = input(title="Timeframe #3", defval="060", options=["M", "W", "3D", "1D", "720", "360", "240", "120", "060", "030", "015", "010", "005", "003", "001"])
+tf4 = input(title="Timeframe #4 (Bottom)", defval="015", options=["M", "W", "3D", "1D", "720", "360", "240", "120", "060", "030", "015", "010", "005", "003", "001"])
+
+TrendFind() =>
+    TrendHF = 0.0
+    TrendUp = 0.0
+    TrendDown = 0.0
+
+    TrendUp := close[1] > TrendUp[1] ? max(Up, TrendUp[1]) : Up
+    TrendDown := close[1] < TrendDown[1] ? min(Dn, TrendDown[1]) : Dn
+    TrendHF := close > TrendDown[1] ? 1 : close < TrendUp[1] ? -1 : nz(TrendHF[1], 1)
+    TrendHF
+// No idea why this isn't working: https://www.tradingview.com/wiki/Pine_Version_3_Migration_Guide
+
+Trend1 = security(syminfo.tickerid, tf1, TrendFind())
+Trend2 = security(syminfo.tickerid, tf2, TrendFind())
+Trend3 = security(syminfo.tickerid, tf3, TrendFind())
+Trend4 = security(syminfo.tickerid, tf4, TrendFind())
+
+linecolor1 = Trend1 == 1 ? color.green : #d32f2f 
+linecolor2 = Trend2 == 1 ? color.lime : color.red
+linecolor3 = Trend3 == 1 ? color.green : #d32f2f
+linecolor4 = Trend4 == 1 ? color.lime : color.red
+
+// plot columns
+plot(title='TF1', series=7, style=plot.style_histogram, color=linecolor1, histbase=6, linewidth=10)
+plot(title='TF2', series=6, style=plot.style_histogram, color=linecolor2, histbase=5, linewidth=10)
+plot(title='TF3', series=5, style=plot.style_histogram, color=linecolor3, histbase=4, linewidth=10)
+plot(title='TF4', series=4, style=plot.style_histogram, color=linecolor4, histbase=3, linewidth=10)  //, transp=interval == 60 and isintraday ? 50 : na)
+
+offset_label = 2
+pos_X = timenow + round(change(time)*offset_label) // to the right of your chart
+pos_Y = 0 // highest(50) // lowest(50) // around the lowest point among the the x latest candles
+
+label1 = label.new(pos_X, 6.5, text=tf1, style=label.style_label_left, color=color.new(color.white, 100), textcolor=color.gray, xloc=xloc.bar_time)
+label.delete(label1[1])
+label2 = label.new(pos_X, 5.5, text=tf2, style=label.style_label_left, color=color.new(color.white, 100), textcolor=color.gray, xloc=xloc.bar_time)
+label.delete(label2[1])
+label3 = label.new(pos_X, 4.5, text=tf3, style=label.style_label_left, color=color.new(color.white, 100), textcolor=color.gray, xloc=xloc.bar_time)
+label.delete(label3[1])
+label4 = label.new(pos_X, 3.5, text=tf4, style=label.style_label_left, color=color.new(color.white, 100), textcolor=color.gray, xloc=xloc.bar_time)
+label.delete(label4[1])
+
+// label2 = label.new(pos_X, 6, text=fishstate(autohtf1_fisher)+ "" + resf + "", style=label.style_label_left, color=color.new(color.white, 100), textcolor=color.gray, xloc=xloc.bar_time)
+// label.delete(label2[1])
+// label3 = label.new(pos_X, 5, text=fishstate(autohtf2_fisher)+ "" + autohtf2 + "", style=label.style_label_left, color=color.new(color.white, 100), textcolor=color.gray, xloc=xloc.bar_time)
+// label.delete(label3[1])
+
+plot(8, transp=100)
+plot(2, transp=100)
+
